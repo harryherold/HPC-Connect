@@ -2,7 +2,7 @@ __author__ = 'harry'
 
 #!/usr/bin/python3
 import string
-import sys, os, re, getpass, argparse
+import sys, os, re, getpass, argparse, yaml
 from paramiko import SSHClient, SSHConfig, AutoAddPolicy
 from threading import Thread, Event
 
@@ -56,6 +56,26 @@ class SshConnector:
         self.ssh_log += str(ssh_stderr.read())
         return str(ssh_stdout.read())
 
+
+class Batchsystem:
+    file_name = "batchconf.yaml"
+    config_templ = "templconf.yaml"
+
+    def create_config(self):
+        stream_templ = open(self.config_templ, 'r')
+        templ = yaml.load(stream_templ)
+        stream_templ.close()
+
+        for entry in templ.keys():
+            print("Please insert the command for {0}".format(entry))
+            text = sys.stdin.readline()
+            templ[entry] = text.strip()
+
+        stream = open(self.file_name, 'a')
+        yaml.dump(templ, stream)
+        stream.close()
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("host", help="host address")
 parser.add_argument("user", help="username")
@@ -63,3 +83,7 @@ args = parser.parse_args()
 
 ssh_connector = SshConnector(args.host, args.user)
 print(ssh_connector.exec_command("ls -l"))
+
+b = Batchsystem()
+b.create_config()
+

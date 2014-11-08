@@ -1,0 +1,2 @@
+{command: sbatch, error_dir: -e, mail: --mail_user, name: SLURM, nodecount: -N, output_dir: -o,
+  project: --account, taskcount: -n, time: --time}
