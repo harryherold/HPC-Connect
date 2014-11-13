@@ -1,2 +1,5 @@
-{command: sbatch, error_dir: -e, mail: --mail_user, name: SLURM, nodecount: -N, output_dir: -o,
-  project: --account, taskcount: -n, time: --time}
+? 'slurm'
+: {error_dir: -e, mail: --mail, node_count: -N, output_dir: -o, project: --account,
+  shell_command: salloc, task_count: -n, time: --time}
+lsf: {error_dir: -eo, mail: -u, node_count: '-R "span[hosts=$1]"', output_dir: -o,
+  project: -P, shell_command: bsub, task_count: -n, time: -W}
