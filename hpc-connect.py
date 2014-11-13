@@ -59,6 +59,14 @@ class SshConnector:
         self.ssh_log += str(ssh_stderr.read())
         return str(ssh_stdout.read())
 
+    def print_log(self):
+        print("SSH LOG")
+        print("=======")
+        print(self.ssh_log)
+
+    def print_modules(self):
+        print(self.exec_command("module av"))
+
 
 class Batchsystem:
     batchsystem_config = None
