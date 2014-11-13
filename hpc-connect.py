@@ -67,6 +67,18 @@ class SshConnector:
     def print_modules(self):
         print(self.exec_command("module av"))
 
+    def load_modules(self, modules):
+        return self.exec_command("module load bullxmpi")
+
+    def submit_job(self, path_to_exec, modules, runtime, options, sys_name):
+        conf = self.batch_sys.get_batchsystem_config(sys_name)
+        print(self.load_modules(modules))
+        cmd = "{0} {1} {2} {3}".format(conf['shell_command'], options, runtime, path_to_exec)
+        print(cmd)
+
+
+
+
 
 class Batchsystem:
     batchsystem_config = None
