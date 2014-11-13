@@ -114,25 +114,31 @@ class Batchsystem:
     def get_supported_systems(self):
         return [s for s in self.batchsystem_config]
 
+    # returns the whole config of a given batchsystem
+    def get_batchsystem_config(self, sys_name):
+        return self.batchsystem_config[sys_name]
+
     # print the config of the supported batch systems
-    def print_system(self,):
+    def print_system(self):
         for system in self.batchsystem_config:
             print("{0} :".format(system))
             for conf in self.batchsystem_config[system]:
                 print("{:>20}:  {}".format(conf, self.batchsystem_config[system][conf]))
 
 
-# parser = argparse.ArgumentParser()
-# parser.add_argument("host", help="host address")
+parser = argparse.ArgumentParser()
+parser.add_argument("host", help="host address")
 # parser.add_argument("user", help="username")
-# args = parser.parse_args()
-#
-# ssh_connector = SshConnector(args.host, args.user)
-# print(ssh_connector.exec_command("ls -l"))
+args = parser.parse_args()
 
-b = Batchsystem()
-b.read_config()
-b.print_system()
+exe = "/home/cherold/mpi-example/hello-mpi"
+runtime = "srun"
+options = "-n 2 -o /home/cherold/mpi.out -e /home/cherold/mpi.err"
 
-# b.create_config()
+ssh_connector = SshConnector(args.host)
+print(ssh_connector.exec_command('bash -c "module av"'))
+ssh_connector.print_log()
+# ssh_connector.submit_job(exe, modules, runtime, options, "slurm")
+
+
 
