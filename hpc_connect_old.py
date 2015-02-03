@@ -46,16 +46,16 @@ def run_logger(hostname, nodename, event):
     #print("Good Bye")
     client.close()
 
-parser = argparse.ArgumentParser()
-parser.add_argument("host", help="host address")
-parser.add_argument("user", help="username")
+#parser = argparse.ArgumentParser()
+#parser.add_argument("host", help="host address")
+#parser.add_argument("user", help="username")
 
-args = parser.parse_args()
+#args = parser.parse_args()
 
-ssh_client = connect(args.host, args.user)
+#ssh_client = connect(args.host, args.user)
 
-ssh_stdin, ssh_stdout, ssh_stderr = ssh_client.exec_command("ls -l")
-print(ssh_stdout.read())
+#ssh_stdin, ssh_stdout, ssh_stderr = ssh_client.exec_command("ls -l")
+#print(ssh_stdout.read())
 
 #host = "taurus"
 #ssh_config = read_ssh_config(host)

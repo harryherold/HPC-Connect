@@ -68,13 +68,13 @@ class SshConnector:
         print(self.exec_command("module av"))
 
     def load_modules(self, modules):
-        return self.exec_command("module load bullxmpi")
+        return self.exec_command("module load {}".format(modules))
 
     def submit_job(self, path_to_exec, modules, runtime, options, sys_name):
         conf = self.batch_sys.get_batchsystem_config(sys_name)
-        print(self.load_modules(modules))
+        self.load_modules(modules)
         cmd = "{0} {1} {2} {3}".format(conf['shell_command'], options, runtime, path_to_exec)
-        print(cmd)
+        self.exec_command(cmd)
 
 
 
@@ -126,19 +126,16 @@ class Batchsystem:
                 print("{:>20}:  {}".format(conf, self.batchsystem_config[system][conf]))
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("host", help="host address")
+#parser = argparse.ArgumentParser()
+#parser.add_argument("host", help="host address")
 # parser.add_argument("user", help="username")
-args = parser.parse_args()
+#args = parser.parse_args()
 
-exe = "/home/cherold/mpi-example/hello-mpi"
-runtime = "srun"
-options = "-n 2 -o /home/cherold/mpi.out -e /home/cherold/mpi.err"
+#exe = "/home/cherold/mpi-example/hello_mpi"
+#runtime = "mpirun"
+#options = "-n 2 -o /home/cherold/mpi.out -e /home/cherold/mpi.err"
+#modules = "openmpi"
 
-ssh_connector = SshConnector(args.host)
-print(ssh_connector.exec_command('bash -c "module av"'))
-ssh_connector.print_log()
-# ssh_connector.submit_job(exe, modules, runtime, options, "slurm")
-
-
-
+#ssh_connector = SshConnector(args.host)
+#ssh_connector.submit_job(exe, modules, runtime, options, "lsf")
+#ssh_connector.print_log()
