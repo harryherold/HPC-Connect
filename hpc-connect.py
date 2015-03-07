@@ -131,11 +131,11 @@ class Batchsystem:
 # parser.add_argument("user", help="username")
 #args = parser.parse_args()
 
-#exe = "/home/cherold/mpi-example/hello_mpi"
-#runtime = "mpirun"
-#options = "-n 2 -o /home/cherold/mpi.out -e /home/cherold/mpi.err"
-#modules = "openmpi"
+exe = "/home/cherold/mpi-example/hello_mpi"
+runtime = "srun"
+options = "-n 2 -o /home/cherold/mpi.out -e /home/cherold/mpi.err"
+modules = "bullxmpi"
 
-#ssh_connector = SshConnector(args.host)
-#ssh_connector.submit_job(exe, modules, runtime, options, "lsf")
-#ssh_connector.print_log()
+ssh_connector = SshConnector("taurus")
+ssh_connector.submit_job(exe, modules, runtime, options, "slurm")
+ssh_connector.print_log()

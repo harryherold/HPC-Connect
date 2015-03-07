@@ -1,5 +1,5 @@
 ? 'slurm'
 : {error_dir: -e, mail: --mail, node_count: -N, output_dir: -o, project: --account,
-  shell_command: salloc, task_count: -n, time: --time}
+  shell_command: srun, task_count: -n, time: --time}
 lsf: {error_dir: -eo, mail: -u, node_count: '-R "span[hosts=$1]"', output_dir: -o,
   project: -P, shell_command: bsub, task_count: -n, time: -W}
