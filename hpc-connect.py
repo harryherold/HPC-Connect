@@ -1,14 +1,19 @@
-__author__ = 'harry'
+__author__ = 'Christian Herold'
 
 #!/usr/bin/python3
 import string
+import select
+import time
 import sys, os, re, getpass, argparse, yaml
 from paramiko import SSHClient, SSHConfig, AutoAddPolicy
+from time import sleep
 from threading import Thread, Event
 
 # for debuging
 import time
 
+def is_ascii(s):
+    return all(ord(c) < 128 for c in s)
 
 class SshConnector:
     host = ""
@@ -17,8 +22,8 @@ class SshConnector:
     ssh_client = None
     batch_sys = None
     ssh_log = ""
-
-    def __init__(self, host, user=None):
+    prompt  = ""
+    def __init__(self, host, home_path, user=None):
         self.batch_sys = Batchsystem()
         self.batch_sys.read_config()
         if user is None:
@@ -29,6 +34,9 @@ class SshConnector:
             self.host = host
             self.user = user
             self.connect(host, user)
+        self.detect_prompt(home_path)
+        print("Deteced prompt:")
+        print(self.prompt)
 
     # connect to host with config
     def connect_with_config(self):
@@ -53,11 +61,31 @@ class SshConnector:
         if len(self.ssh_config.keys()) < 2:
             print("Hostname no found in .ssh/config")
 
-    # execute command on the host
+    # execute command on the host, blocking semantic
     def exec_command(self, cmd):
         ssh_stdin, ssh_stdout, ssh_stderr = self.ssh_client.exec_command(cmd)
         self.ssh_log += str(ssh_stderr.read())
         return str(ssh_stdout.read())
+
+    def detect_prompt(self,home_path):
+        channel = self.ssh_client.invoke_shell()
+        while not channel.send_ready():
+            time.sleep(0.00001)
+        channel.send('echo $HOME\n')
+        buffer = ''
+        while not home_path in buffer:
+            resp = channel.recv(1024)
+            buffer += resp
+
+        idx = buffer.rfind('echo')
+        prompt = ''
+        for i in range(idx - 2, -1, -1):
+            if( buffer[i] == ' ' ):
+                break
+            elif(buffer[i] != '\r' and buffer[i] != '\n' and buffer[i] != '\t' ):
+                prompt += buffer[i]
+        self.prompt = prompt[::-1]
+
 
     def print_log(self):
         print("SSH LOG")
@@ -75,10 +103,6 @@ class SshConnector:
         self.load_modules(modules)
         cmd = "{0} {1} {2} {3}".format(conf['shell_command'], options, runtime, path_to_exec)
         self.exec_command(cmd)
-
-
-
-
 
 class Batchsystem:
     batchsystem_config = None
@@ -125,17 +149,5 @@ class Batchsystem:
             for conf in self.batchsystem_config[system]:
                 print("{:>20}:  {}".format(conf, self.batchsystem_config[system][conf]))
 
-
-#parser = argparse.ArgumentParser()
-#parser.add_argument("host", help="host address")
-# parser.add_argument("user", help="username")
-#args = parser.parse_args()
-
-exe = "/home/cherold/mpi-example/hello_mpi"
-runtime = "srun"
-options = "-n 2 -o /home/cherold/mpi.out -e /home/cherold/mpi.err"
-modules = "bullxmpi"
-
-ssh_connector = SshConnector("taurus")
-ssh_connector.submit_job(exe, modules, runtime, options, "slurm")
+ssh_connector = SshConnector("taurus",'/home/cherold')
 ssh_connector.print_log()
