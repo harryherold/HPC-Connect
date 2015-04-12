@@ -1,19 +1,13 @@
 __author__ = 'Christian Herold'
 
-#!/usr/bin/python3
-import string
-import select
+#!/usr/bin/python2
 import time
-import sys, os, re, getpass, argparse, yaml
+import sys
+import os
+import getpass
+import yaml
 from paramiko import SSHClient, SSHConfig, AutoAddPolicy
-from time import sleep
-from threading import Thread, Event
 
-# for debuging
-import time
-
-def is_ascii(s):
-    return all(ord(c) < 128 for c in s)
 
 class SshConnector:
     host = ""
@@ -22,7 +16,8 @@ class SshConnector:
     ssh_client = None
     batch_sys = None
     ssh_log = ""
-    prompt  = ""
+    prompt = ""
+
     def __init__(self, host, home_path, user=None):
         self.batch_sys = Batchsystem()
         self.batch_sys.read_config()
@@ -43,7 +38,8 @@ class SshConnector:
         self.ssh_client = SSHClient()
         self.ssh_client.load_system_host_keys()
         self.ssh_client.set_missing_host_key_policy(AutoAddPolicy())
-        self.ssh_client.connect(self.ssh_config['hostname'], username=self.ssh_config['user'])
+        self.ssh_client.connect(self.ssh_config['hostname'],
+                                username=self.ssh_config['user'])
 
     # connect with user parameter
     def connect(self, host, user):
@@ -62,7 +58,7 @@ class SshConnector:
             print("Hostname no found in .ssh/config")
 
     # execute command on the host, blocking semantic
-    def exec_command(self, cmd):
+    def execute(self, cmd):
         ssh_stdin, ssh_stdout, ssh_stderr = self.ssh_client.exec_command(cmd)
         self.ssh_log += str(ssh_stderr.read())
         return str(ssh_stdout.read())
@@ -82,29 +78,28 @@ class SshConnector:
         end = len(recv_buffer) - len(self.prompt + ' ')
         return recv_buffer[begin:end]
 
-    def detect_prompt(self,home_path):
+    def detect_prompt(self, home_path):
         channel = self.ssh_client.invoke_shell()
         while not channel.send_ready():
             time.sleep(0.00001)
         channel.send('echo $HOME\n')
-        buffer = ''
-        while not home_path in buffer:
+        recv_buffer = ''
+        while not home_path in recv_buffer:
             resp = channel.recv(1024)
-            buffer += resp
-
-        idx = buffer.rfind('echo')
+            recv_buffer += resp
+        idx = recv_buffer.rfind('echo')
         prompt = ''
         for i in range(idx - 2, -1, -1):
-            if( buffer[i] == ' ' ):
+            if(recv_buffer[i] == ' '):
                 break
-            elif(buffer[i] != '\r' and buffer[i] != '\n' and buffer[i] != '\t' ):
-                prompt += buffer[i]
+            elif(recv_buffer[i] != '\r' and recv_buffer[i] != '\n'
+                                   and recv_buffer[i] != '\t'):
+                prompt += recv_buffer[i]
         self.prompt = prompt[::-1]
 
-
     def print_log(self):
-        print("SSH LOG")
-        print("=======")
+        print("\n\nSSH LOG")
+        print("========")
         print(self.ssh_log)
 
     def print_modules(self):
@@ -116,8 +111,10 @@ class SshConnector:
     def submit_job(self, path_to_exec, modules, runtime, options, sys_name):
         conf = self.batch_sys.get_batchsystem_config(sys_name)
         self.load_modules(modules)
-        cmd = "{0} {1} {2} {3}".format(conf['shell_command'], options, runtime, path_to_exec)
+        cmd = "{0} {1} {2} {3}".format(conf['shell_command'], options,
+                                runtime, path_to_exec)
         self.exec_command(cmd)
+
 
 class Batchsystem:
     batchsystem_config = None
@@ -162,7 +159,11 @@ class Batchsystem:
         for system in self.batchsystem_config:
             print("{0} :".format(system))
             for conf in self.batchsystem_config[system]:
-                print("{:>20}:  {}".format(conf, self.batchsystem_config[system][conf]))
+                print("{:>20}:  {}".format(conf,
+                       self.batchsystem_config[system][conf]))
 
-ssh_connector = SshConnector("taurus",'/home/cherold')
-ssh_connector.print_log()
+
+ssh_connector = SshConnector("taurus", '/home/cherold')
+output = ssh_connector.execute_in_session('module load bullxmpi')
+print output
+#ssh_connector.print_log()
