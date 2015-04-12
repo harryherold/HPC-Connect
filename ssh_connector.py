@@ -15,12 +15,14 @@ class SshConnector:
     ssh_config = None
     ssh_client = None
     batch_sys = None
+    batch_config = None
     ssh_log = ""
     prompt = ""
 
-    def __init__(self, host, home_path, user=None):
+    def __init__(self, host, home_path, batch_sys, user=None):
         self.batch_sys = Batchsystem()
         self.batch_sys.read_config()
+        self.batch_config = self.batch_sys.get_batchsystem_config(batch_sys)
         if user is None:
             self.host = host
             self.read_ssh_config(host)
@@ -30,8 +32,6 @@ class SshConnector:
             self.user = user
             self.connect(host, user)
         self.detect_prompt(home_path)
-        print("Deteced prompt:")
-        print(self.prompt)
 
     # connect to host with config
     def connect_with_config(self):
@@ -57,15 +57,18 @@ class SshConnector:
         if len(self.ssh_config.keys()) < 2:
             print("Hostname no found in .ssh/config")
 
+    #returns an session channel
+    def create_session(self):
+        return self.ssh_client.invoke_shell()
+
     # execute command on the host, blocking semantic
     def execute(self, cmd):
         ssh_stdin, ssh_stdout, ssh_stderr = self.ssh_client.exec_command(cmd)
         self.ssh_log += str(ssh_stderr.read())
         return str(ssh_stdout.read())
 
-    # implement own function to check prompt in reverse order
-    def execute_in_session(self, cmd):
-        channel = self.ssh_client.invoke_shell()
+    # TODO implement own function to check prompt in reverse order
+    def execute_in_session(self, cmd, channel):
         while not channel.send_ready():
             time.sleep(0.00001)
         channel.send(cmd + '\n')
@@ -105,8 +108,25 @@ class SshConnector:
     def print_modules(self):
         print(self.exec_command("module av"))
 
-    def load_modules(self, modules):
-        return self.exec_command("module load {}".format(modules))
+    def load_modules(self, modules, channel):
+        return self.execute_in_session("module load {}".format(modules),
+                                       channel)
+
+    # modules must seperated with whitespaces
+    def submit_interactive_job(self, app, ntasks,
+                               nnodes=None, runtime=None, modules=None):
+        channel = self.create_session()
+        if not modules is None:
+            print(self.load_modules(modules, channel))
+        cmd = self.batch_config['shell_command'] + ' '
+        cmd += self.batch_config['task_count'] + " {0} ".format(ntasks)
+        if not nnodes is None:
+            cmd += self.batch_config['node_count'] + " {0} ".format(nnodes)
+        if not runtime is None:
+            cmd += runtime + ' '
+        cmd += app
+        print("Job submitted\nWaiting for ressources...")
+        print(self.execute_in_session(cmd, channel))
 
     def submit_job(self, path_to_exec, modules, runtime, options, sys_name):
         conf = self.batch_sys.get_batchsystem_config(sys_name)
