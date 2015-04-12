@@ -67,6 +67,21 @@ class SshConnector:
         self.ssh_log += str(ssh_stderr.read())
         return str(ssh_stdout.read())
 
+    # implement own function to check prompt in reverse order
+    def execute_in_session(self, cmd):
+        channel = self.ssh_client.invoke_shell()
+        while not channel.send_ready():
+            time.sleep(0.00001)
+        channel.send(cmd + '\n')
+        recv_buffer = " "
+        while not recv_buffer.endswith(self.prompt + ' '):
+            rsp = channel.recv(1024)
+            recv_buffer += rsp
+        pattern = self.prompt + ' ' + cmd
+        begin = recv_buffer.find(pattern) + len(pattern) + 2
+        end = len(recv_buffer) - len(self.prompt + ' ')
+        return recv_buffer[begin:end]
+
     def detect_prompt(self,home_path):
         channel = self.ssh_client.invoke_shell()
         while not channel.send_ready():
